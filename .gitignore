@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+build/
+dist/
+data/
+.venv/
+*.log
+_testdata/
+_legacy/
+.workbuddy-ai/
+screenshot*.png
+*.b64.tmp
