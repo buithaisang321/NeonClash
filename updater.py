@@ -27,7 +27,7 @@ BASE = os.environ.get("NC_UPDATE_BASE") or \
     ("https://raw.githubusercontent.com/%s/%s" % (REPO, BRANCH))
 
 # phien ban code dong trong exe — tools/release.py cap nhat khi build
-BUNDLED_VERSION = "1.4.2"
+BUNDLED_VERSION = "1.5.0"
 
 
 def _app_dir():

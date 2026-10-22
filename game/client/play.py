@@ -710,8 +710,11 @@ class Play:
         if ui.button("pleave", (bx, by + 96, bw, 38), "Rời trận", "danger", size=12):
             self.app.ask_confirm("Rời trận?", "Bạn sẽ trở về Hub và rời khỏi phòng.",
                                  "Rời trận", self.app.leave_room, danger=True)
-        T.text(surf, "Nhấn ESC để quay lại trận", (box.centerx, box.bottom - 32), 9.5,
+        T.text(surf, "Nhấn ESC để quay lại trận", (box.centerx, box.bottom - 46), 9.5,
                T.DIM, align="center")
+        from ..version import display
+        T.text(surf, display() + " · NEON CLASH", (box.centerx, box.bottom - 28), 9,
+               (57, 64, 92), align="center")
 
     def draw_end(self, surf, ui, dt):
         r = self.renderer

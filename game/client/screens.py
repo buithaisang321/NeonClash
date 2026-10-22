@@ -221,7 +221,8 @@ class Launcher:
         elif self.error:
             T.text(surf, self.error, (r2.x + 15, r2.bottom + 4), 11, T.ACCENT)
 
-        T.text(surf, "v1.4 · NEON CLASH", (w // 2, h - 26), 10, (57, 64, 92), align="center")
+        from ..version import display
+        T.text(surf, "%s · NEON CLASH" % display(), (w // 2, h - 26), 10, (57, 64, 92), align="center")
 
     def _set_port(self, v):
         app = self.app
@@ -562,7 +563,8 @@ class Hub:
                 "Giữ chuột trái để bắn liên tục, phím 1–5 để tung chiêu. "
                 "Núp trong bụi cỏ để phục kích.", 10.5, r.w - 56)[:3]):
             T.text(surf, line, (x + 10, y + 24 + j * 14), 10.5, T.MUTED)
-        T.text(surf, "v1.4 · NEON CLASH", (r.centerx, r.bottom - 24), 9.5,
+        from ..version import display
+        T.text(surf, "%s · NEON CLASH" % display(), (r.centerx, r.bottom - 24), 9.5,
                (57, 64, 92), align="center")
 
 
