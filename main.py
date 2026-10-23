@@ -10,6 +10,14 @@ import asyncio
 import os
 import sys
 
+# stdout co the la cp1252 khi chay tu exe (khong co console) -> loi encode tieng Viet
+for _s in (sys.stdout, sys.stderr):
+    try:
+        if _s is not None:
+            _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # Khi chay tu exe: uu tien code da tai ve tu GitHub (neu co) va kiem tra
 # ban moi trong background. Dev chay bang python main.py thi bo qua.
 if getattr(sys, "frozen", False):

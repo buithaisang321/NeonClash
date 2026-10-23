@@ -551,7 +551,27 @@ class Hub:
         y += 42
         if ui.button("hhelp", (x, y, r.w - 32, 36), "Hướng dẫn", "normal", size=13):
             app.open_help()
-        y += 46
+        y += 44
+        # nut Cap nhat + trang thai ban moi
+        label, kind = app.update_label()
+        if ui.button("hupd", (x, y, r.w - 32, 36), label, kind, size=12):
+            app.update_click()
+        y += 40
+        from ..version import display
+        if app.update_ready:
+            T.text(surf, "Đã tải bản mới — sẽ vào sau khi khởi động lại",
+                   (x, y), 9.5, T.GREEN)
+        elif app.update_remote:
+            rv = app.update_remote.get("version", "0")
+            cv = app.update_running
+            if tuple(int(p) for p in rv.split(".")) > tuple(int(p) for p in cv.split(".")):
+                T.text(surf, "Có bản V%s.%s mới!" % tuple(rv.split(".")[:2]),
+                       (x, y), 9.5, T.CYAN)
+            else:
+                T.text(surf, "%s · bản mới nhất" % display(), (x, y), 9.5, T.DIM)
+        else:
+            T.text(surf, "%s · không kiểm tra được" % display(), (x, y), 9.5, T.DIM)
+        y += 20
         T.rect(surf, (x, y, r.w - 32, 1), (255, 255, 255, 18))
         y += 12
         # hub-tip

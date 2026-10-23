@@ -20,7 +20,7 @@ DefaultGroupName={#MyAppName}
 PrivilegesRequired=lowest
 DisableProgramGroupPage=yes
 OutputDir=..\dist
-OutputBaseFilename=NeonClash-Setup-{#APP_VERSION}
+OutputBaseFilename=NeonClash-Setup
 SetupIconFile=..\build\icon.ico
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
@@ -49,6 +49,8 @@ Name: "desktopicon"; Description: "Tạo shortcut ngoài Desktop"; GroupDescript
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Chơi NEON CLASH ngay"; Flags: nowait postinstall skipifsilent
+; tu xoa file setup sau khi cai xong (cho 2s de setup thoat roi moi del)
+Filename: "{cmd}"; Parameters: "/C ping -n 3 127.0.0.1 > nul & del ""{srcexe}"""; Flags: runhidden nowait
 
 [UninstallDelete]
 ; don du lieu cache code update khi go cai dat (giu profile nguoi choi)

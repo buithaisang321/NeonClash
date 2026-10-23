@@ -27,7 +27,7 @@ BASE = os.environ.get("NC_UPDATE_BASE") or \
     ("https://raw.githubusercontent.com/%s/%s" % (REPO, BRANCH))
 
 # phien ban code dong trong exe — tools/release.py cap nhat khi build
-BUNDLED_VERSION = "1.5.0"
+BUNDLED_VERSION = "1.6.0"
 
 
 def _app_dir():
@@ -64,6 +64,10 @@ def prepare():
     Goi TRUOC khi import game. Tra ve thu muc code dang dung, hoac None.
     """
     app = _app_dir()
+    # don file tam con sot tu lan update bi giua chua
+    for tmp in (app + ".new", app + ".old"):
+        if os.path.isdir(tmp):
+            shutil.rmtree(tmp, ignore_errors=True)
     meta = _read_json(os.path.join(app, "version.json"))
     if meta and os.path.isdir(os.path.join(app, "game")):
         if _ver_tuple(meta.get("version", "0")) >= _ver_tuple(BUNDLED_VERSION):
@@ -71,6 +75,14 @@ def prepare():
                 sys.path.insert(0, app)
             return app
     return None
+
+
+def check_remote():
+    """Doc version.json tu GitHub. Tra ve dict hoac None (offline)."""
+    try:
+        return json.loads(_fetch(BASE + "/release/version.json").decode("utf-8"))
+    except Exception:
+        return None
 
 
 def _download_update(app, meta):
@@ -99,12 +111,23 @@ def _download_update(app, meta):
         shutil.rmtree(tmp_old, ignore_errors=True)
 
 
-def check_async(log=None):
-    """Background thread: neu co ban moi thi tai ve (dung o lan mo sau)."""
+def check_async(log=None, on_meta=None):
+    """Background thread: neu co ban moi thi tai ve (dung o lan mo sau).
+
+    on_meta(meta|None) duoc goi voi thong tin ban moi nhat tren GitHub
+    (de UI hien thi nut Cap nhat).
+    """
     def run():
         app = _app_dir()
         try:
-            meta = json.loads(_fetch(BASE + "/release/version.json").decode("utf-8"))
+            meta = check_remote()
+            if not meta:
+                if on_meta:
+                    try:
+                        on_meta(None)
+                    except Exception:
+                        pass
+                return
             cur = _read_json(os.path.join(app, "version.json")) or {"version": BUNDLED_VERSION}
             if _ver_tuple(meta.get("version", "0")) > _ver_tuple(cur.get("version", "0")):
                 if log:
@@ -112,9 +135,38 @@ def check_async(log=None):
                 _download_update(app, meta)
                 if log:
                     log("Đã tải bản mới — lần mở game sau sẽ chạy bản cập nhật.")
+            # on_meta goi SAU khi tai xong de UI biet trang thai cuoi cung
+            if on_meta:
+                try:
+                    on_meta(meta)
+                except Exception:
+                    pass
         except Exception:
             pass  # offline hoac chua co ban moi: lam ngo
+            if on_meta:
+                try:
+                    on_meta(None)
+                except Exception:
+                    pass
 
     t = threading.Thread(target=run, daemon=True)
     t.start()
     return t
+
+
+def restart_app():
+    """Khoi dong lai game (chi khi chay tu exe) de vao ban vua update."""
+    if getattr(sys, "frozen", False):
+        args = [sys.executable] + list(sys.argv[1:])
+        os.execl(sys.executable, *args)
+
+
+def local_version():
+    """Version cua code dang dung (da tai ve hoac bundle trong exe)."""
+    app = _app_dir()
+    meta = _read_json(os.path.join(app, "version.json"))
+    return (meta or {}).get("version", BUNDLED_VERSION)
+
+
+# ten cong khai cho app su dung
+download_update = _download_update

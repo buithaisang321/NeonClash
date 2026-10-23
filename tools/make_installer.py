@@ -45,7 +45,7 @@ def main():
         return 1
 
     iss = os.path.join(ROOT, "installer", "neonclash.iss")
-    out = os.path.join(ROOT, "dist", "NeonClash-Setup-%s.exe" % version)
+    out = os.path.join(ROOT, "dist", "NeonClash-Setup.exe")
     print("Bien dich installer (version %s) ..." % version)
     r = subprocess.run([iscc, "/DAPP_VERSION=%s" % version, "/Qp", iss], cwd=ROOT)
     if r.returncode != 0:

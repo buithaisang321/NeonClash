@@ -64,6 +64,14 @@ class App:
         self._probe_thread = None
         self.headless = bool(os.environ.get("NC_HEADLESS"))
         self._vig = {}
+        # auto-update: ket qua kiem tra ban moi (dung cho nut Cap nhat o Hub)
+        self.update_remote = None      # meta cua ban moi nhat tren GitHub (hoac None)
+        self.update_busy = False
+        self.update_ready = False      # da tai xong, cho restart
+        # phien ban code DANG CHAY (frozen: prepare() uu tien code da tai ve
+        # qua sys.path nen VERSION o day = code that su dang chay)
+        from ..version import VERSION as _RUN_VER
+        self.update_running = _RUN_VER
 
         self.launcher = S.Launcher(self)
         self.hub = S.Hub(self)
@@ -75,8 +83,85 @@ class App:
         self.apply_settings()
         if self.profile_name != "main":
             self.toast("Client riêng · profile %s" % self.profile_name)
-        if self.profile_name != "main":
-            self.toast("Client riêng · profile %s" % self.profile_name)
+        # kiem tra ban moi trong background (on_meta luu lai cho nut Cap nhat)
+        try:
+            import updater
+            updater.check_async(log=self.toast, on_meta=self._on_update_meta)
+        except Exception:
+            pass
+
+    def _on_update_meta(self, meta):
+        """Background check xong: luu meta ban moi.
+
+        Neu ban moi da duoc tai tu dong (check_async tai ngam) thi bat
+        update_ready de Hub hien nut "Khoi dong lai game".
+        """
+        self.update_remote = meta
+        if meta:
+            try:
+                import updater
+                rv = tuple(int(x) for x in str(meta.get("version", "0")).split("."))
+                cv = tuple(int(x) for x in self.update_running.split("."))
+                if rv > cv and updater.local_version() == meta.get("version"):
+                    self.update_ready = True   # da tai xong — chi can khoi dong lai
+            except Exception:
+                pass
+
+    # ---------------- cap nhat thu cong (nut o Hub) ----------------
+    def update_click(self):
+        """Nguoi choi bam nut Cap nhat: kiem tra + tai ban moi (neu co)."""
+        if self.update_busy:
+            return
+        if self.update_ready:
+            # ban moi da tai xong (tu dong hoac bang tay) — chi can khoi dong lai
+            import updater
+            updater.restart_app()
+            return
+        self.update_busy = True
+
+        def run():
+            import updater
+            try:
+                meta = updater.check_remote()
+                self.update_remote = meta
+                if not meta:
+                    self.toast("Không kiểm tra được bản cập nhật (mạng yếu?)")
+                    return
+                rv = meta.get("version", "0")
+                cv = self.update_running   # so voi ban DANG CHAY, khong phai ban da tai
+                if tuple(int(x) for x in rv.split(".")) <= tuple(int(x) for x in cv.split(".")):
+                    self.toast("Bạn đang dùng bản mới nhất (V%s.%s)" % tuple(cv.split(".")[:2]))
+                    return
+                self.toast("Đang tải bản %s ..." % rv)
+                updater.download_update(self._app_dir_pub(), meta)
+                self.update_remote = meta
+                self.update_ready = True
+                self.toast("Đã cập nhật lên %s! Đang khởi động lại game..." % rv)
+                time.sleep(1.0)
+                updater.restart_app()
+            except Exception as ex:
+                self.toast("Cập nhật thất bại: %s" % ex)
+            finally:
+                self.update_busy = False
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def update_label(self):
+        """Nhan + loai nut Cap nhat o Hub."""
+        cv = tuple(int(x) for x in self.update_running.split("."))
+        rv = self.update_remote.get("version", "0") if self.update_remote else None
+        if self.update_busy:
+            return "Đang kiểm tra...", "normal"
+        if self.update_ready:
+            return "Khởi động lại game", "primary"
+        if rv and tuple(int(x) for x in rv.split(".")) > cv:
+            return "Cập nhật → V%s.%s" % tuple(rv.split(".")[:2]), "accent"
+        return "Cập nhật bản mới", "normal"
+
+    @staticmethod
+    def _app_dir_pub():
+        import updater
+        return updater._app_dir()
 
     def vignette(self, key):
         vg = self._vig.get(key)
