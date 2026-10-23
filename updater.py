@@ -23,11 +23,21 @@ import zipfile
 
 REPO = "buithaisang321/NeonClash"   # tools/release.py khong doi dong nay
 BRANCH = "main"
-BASE = os.environ.get("NC_UPDATE_BASE") or \
-    ("https://raw.githubusercontent.com/%s/%s" % (REPO, BRANCH))
+
+# Nguon tai: raw GitHub truoc, fallback sang CDN jsDelivr (vung bi ISP chan
+# raw.githubusercontent.com van thuong toi duoc jsDelivr). Neu NC_UPDATE_BASE
+# duoc dat (test) thi CHI dung nguon do.
+if os.environ.get("NC_UPDATE_BASE"):
+    MIRRORS = [os.environ["NC_UPDATE_BASE"].rstrip("/")]
+else:
+    MIRRORS = [
+        "https://raw.githubusercontent.com/%s/%s" % (REPO, BRANCH),
+        "https://cdn.jsdelivr.net/gh/%s@%s" % (REPO, BRANCH),
+        "https://fastly.jsdelivr.net/gh/%s@%s" % (REPO, BRANCH),
+    ]
 
 # phien ban code dong trong exe — tools/release.py cap nhat khi build
-BUNDLED_VERSION = "1.6.0"
+BUNDLED_VERSION = "1.6.1"
 
 
 def _app_dir():
@@ -49,6 +59,22 @@ def _fetch(url, timeout=4.0):
     req = urllib.request.Request(url, headers={"User-Agent": "NeonClash-Updater"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read()
+
+
+def fetch_rel(path, timeout=8.0, tries=2):
+    """Tai file trong release/ thu tung nguon (mirror) theo thu tu.
+
+    path nhu "/release/version.json". Thu moi mirror `tries` lan truoc khi
+    chuyen sang mirror ke tiep. Tra ve bytes hoac nem exception cuoi cung.
+    """
+    last = None
+    for base in MIRRORS:
+        for _ in range(tries):
+            try:
+                return _fetch(base + path, timeout=timeout)
+            except Exception as ex:
+                last = ex
+    raise last
 
 
 def _ver_tuple(v):
@@ -78,16 +104,16 @@ def prepare():
 
 
 def check_remote():
-    """Doc version.json tu GitHub. Tra ve dict hoac None (offline)."""
+    """Doc version.json tu nguon cap nhat. Tra ve dict hoac None (offline)."""
     try:
-        return json.loads(_fetch(BASE + "/release/version.json").decode("utf-8"))
+        return json.loads(fetch_rel("/release/version.json", timeout=8.0).decode("utf-8"))
     except Exception:
         return None
 
 
 def _download_update(app, meta):
     zip_name = meta.get("zip", "game.zip.b64")
-    data = _fetch(BASE + "/release/" + zip_name, timeout=30)
+    data = fetch_rel("/release/" + zip_name, timeout=90.0, tries=1)
     if zip_name.endswith(".b64"):
         data = base64.b64decode(data)
     if meta.get("sha256") and hashlib.sha256(data).hexdigest() != meta["sha256"]:

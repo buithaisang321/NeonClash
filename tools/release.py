@@ -100,7 +100,31 @@ def github_put(owner_repo, branch, path, content_bytes, token, message):
         r.read()
 
 
+def purge_jsdelivr():
+    """Xoa cache jsDelivr cho release/ de nguoi choi nhan ban moi ngay.
+
+    jsDelivr cache file theo branch ~12h; purge de dam bao CDN tra dung ban vua push.
+    """
+    from updater import REPO, BRANCH
+    ok = 0
+    for f in ("version.json", "game.zip.b64"):
+        try:
+            req = urllib.request.Request(
+                "https://purge.jsdelivr.net/gh/%s@%s/release/%s" % (REPO, BRANCH, f),
+                method="POST",
+                headers={"User-Agent": "NeonClash-Release"})
+            urllib.request.urlopen(req, timeout=15).read()
+            print("Da purge jsDelivr: release/" + f)
+            ok += 1
+        except Exception as ex:
+            print("Purge jsDelivr release/%s loi (bo qua): %s" % (f, ex))
+    return ok
+
+
 def main():
+    if "--purge" in sys.argv:
+        purge_jsdelivr()
+        return
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
     do_push = "--push" in sys.argv
     cur = read_current()

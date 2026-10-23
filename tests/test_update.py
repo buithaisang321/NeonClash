@@ -124,7 +124,7 @@ def main():
     srv, live = start_fake_server()
     os.environ["NC_UPDATE_BASE"] = live
     import updater
-    assert updater.BASE == live, "updater.BASE phai tro vao server gia (dung %s)" % updater.BASE
+    assert updater.MIRRORS == [live], "updater.MIRRORS phai chi con server gia (dung %s)" % updater.MIRRORS
     print("Fake GitHub: %s (ban gia %s)" % (live, FAKE_VER))
     ok_all = True
 
@@ -159,7 +159,7 @@ def main():
     print("\nB) Mo game khi mang OFF (check that bai) -> bam Cap nhat thu cong:")
     try:
         # reset module state cho App moi
-        updater.BASE = DEAD_BASE
+        updater.MIRRORS = [DEAD_BASE]
         app, frame, rects = make_app(DEAD_BASE, "data_b")
         time.sleep(2.0)   # cho background check that bai xong
         check("update_remote = None (check that bai)", app.update_remote is None,
@@ -176,7 +176,7 @@ def main():
         app.update_remote = None
 
         # bam nut that: check_remote (mang da ve) -> tai ve
-        updater.BASE = live
+        updater.MIRRORS = [live]
         click_btn(frame, rects, "hupd")
         got = wait_until(lambda: app.update_ready and not app.update_busy, timeout=30)
         check("bam nut -> tai ve xong", got)
