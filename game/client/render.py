@@ -598,7 +598,10 @@ class Renderer:
             col = (255, 255, 255) if sl.get("hit") else (170, 210, 255)
             width = max(2, int((10 if sl.get("big") else 6) * a * z))
             rect = pygame.Rect(4, 4, int(rad * 2), int(rad * 2))
-            start = sl["a"] - 0.9
+            # góc game: pi/2 = XUỐNG dưới (Y màn hình trỏ xuống); pygame.draw.arc
+            # đo ngược (pi/2 = đỉnh màn hình) -> phải đảo dấu để vòm chém khớp
+            # đúng vùng damage quanh góc a (±0.9 rad).
+            start = -sl["a"] - 0.9
             pygame.draw.arc(s, (*col, int(210 * a)), rect, start, start + 1.8, width)
             surf.blit(s, (sx - rad - 4, sy - rad - 4))
 

@@ -1,8 +1,8 @@
 {
- "version": "1.6.1",
+ "version": "1.6.2",
  "protocol": 2,
  "zip": "game.zip.b64",
  "zip_b64": true,
- "sha256": "acf58152f15ada42651697b566502382390f82ba4a0b2ba4d17a971f695286c0",
- "size": 82594
+ "sha256": "a18dd2a14ccbfdd8259a399359315c4933904b0c78492b0c2068d8f2d52cf403",
+ "size": 82789
 }
